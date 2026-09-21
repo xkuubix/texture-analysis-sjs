@@ -252,7 +252,6 @@ class Patient:
                 print(f"  CORRECTING GEOMETRY: {self.id}")
                 print(f"  Folder : {self.folder}")
                 print(f"{'═' * 55}")
-                print(f"  {name:<12} MISMATCH detected -> Overwriting...")
 
                 # Scenario A: Same dimensions, update header/affine metadata
                 if shape_match:
@@ -266,7 +265,6 @@ class Patient:
                 # Scenario B: Shape mismatch, warn user
                 else:
                     print("    └─ Shape mismatch, cannot align...")
-            print()
 
     def available_sequences(self) -> List[str]:
         """Return sequences for which an image was found."""
