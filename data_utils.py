@@ -9,6 +9,7 @@ import nibabel as nib
 import nilearn.image as nimg
 
 
+import shutil
 warnings.filterwarnings("ignore", message=".*pixdim.*", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*slope.*", category=UserWarning)
 
@@ -256,6 +257,7 @@ class Patient:
                 # Scenario A: Same dimensions, update header/affine metadata
                 if shape_match:
                     print("    └─ Copying affine and header from original image...")
+                    shutil.copy2(label_path, Path(f"{label_path}.bak"))
                     mask_data = mask.get_fdata().astype(np.uint8)
                     corrected_mask = nib.Nifti1Image(mask_data, affine=image.affine, header=image.header)
                     corrected_mask.set_data_dtype(np.uint8)
