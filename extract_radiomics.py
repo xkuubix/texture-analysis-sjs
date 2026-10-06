@@ -36,6 +36,8 @@ def main():
     if args.correct:
         for patient in dataset.patients:
             patient.correct()
+        for patient in dataset.patients:
+            patient.info()
 
     regions = args.regions
     label_regions = regions or list(SEG_PREFIXES)
