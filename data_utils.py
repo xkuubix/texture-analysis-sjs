@@ -23,7 +23,7 @@ SEQUENCE_PATTERNS: Dict[str, str] = {
     "T1_VIBE_IN":    r"t1_vibe_dixon.*_in",         # in-phase
     "T1_VIBE_F":     r"t1_vibe_dixon.*_F(?!$)",     # fat-only
     "T1_VIBE_W":     r"t1_vibe_dixon.*_W(?!$)",     # water-only
-    "T2_SPACE":      r"t[12]_space_tra.*iso_1\.0mm",
+    "T2_SPACE":      r"t2_space_tra.*iso_1\.0mm",
     "Sialo_MR":      r"Sialo-MR",
     "T1_TSE":        r"t1_tse_(?:tra|cor)",
     "T2_DIXON_IN":   r"t2_tse_dixon.*_in",          # in-phase
