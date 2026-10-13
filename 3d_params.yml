@@ -34,8 +34,8 @@ setting: #----------------------------------------------------------------------
 # ============= Feature Extractor Level =============
 
 # Image Normalization
-  # normalize:                # [False]: Boolean, set to True to enable normalizing of the image before any resampling.
-  # normalizeScale:           # [1]: Float, > 0, determines the scale after normalizing the image. If normalizing is disabled, this has no effect.
+  normalize: True               # [False]: Boolean, set to True to enable normalizing of the image before any resampling.
+  normalizeScale: 100           # [1]: Float, > 0, determines the scale after normalizing the image. If normalizing is disabled, this has no effect.
   # removeOutliers:           # [None]: Float, > 0, defines the outliers to remove from the image. An outlier is defined as values that differ more than nσ_x from the mean, where n>0 and equal to the value of this setting.
   
   
@@ -55,7 +55,7 @@ setting: #----------------------------------------------------------------------
 # Mask validation
   # minimumROIDimensions:     # [2]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively). Single-voxel segmentations are always excluded.
   # minimumROISize:           # [None] Integer, > 0, specifies the minimum number of voxels required. Test is skipped if this parameter is omitted (specifying it as None in the parameter file will throw an error).
-  # geometryTolerance:        # [None]: Float, determines the tolarance used by SimpleITK to compare origin, direction and spacing between image and mask. Affects the fist step in checkMask(). If set to None, PyRadiomics will use SimpleITK default (1e-16).
+  geometryTolerance: 1e-06    # [None]: Float, determines the tolarance used by SimpleITK to compare origin, direction and spacing between image and mask. Affects the fist step in checkMask(). If set to None, PyRadiomics will use SimpleITK default (1e-16).
   # correctMask:              # [False]: Boolean, if set to true, PyRadiomics will attempt to resample the mask to the image geometry when the first step in checkMask() fails. This uses a nearest neighbor interpolator. Mask check will still fail if the ROI defined in the mask includes areas outside of the image physical space.
   
 # Miscellaneous
@@ -93,8 +93,8 @@ setting: #----------------------------------------------------------------------
   label: 255                #[1]: Integer, label value of Region of Interest (ROI) in labelmap.
 
 # Image discretization https://discourse.slicer.org/t/binwidth-optimization/15996/2
-  binWidth: 4            # [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
-  # binCount:               # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
+  # binWidth:            # [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
+  binCount: 64              # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
 
 # Forced 2D extraction
   force2D: False               # [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies the ‘slice’ can be defined in force2Ddimension. If input ROI is already a 2D ROI, features are automatically extracted in 2D.
