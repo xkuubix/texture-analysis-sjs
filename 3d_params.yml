@@ -93,8 +93,8 @@ setting: #----------------------------------------------------------------------
   label: 255                #[1]: Integer, label value of Region of Interest (ROI) in labelmap.
 
 # Image discretization https://discourse.slicer.org/t/binwidth-optimization/15996/2
-  # binWidth:            # [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
-  binCount: 64              # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
+  binWidth: 5            # [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
+  # binCount:            # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
 
 # Forced 2D extraction
   force2D: False               # [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies the ‘slice’ can be defined in force2Ddimension. If input ROI is already a 2D ROI, features are automatically extracted in 2D.
@@ -113,7 +113,7 @@ setting: #----------------------------------------------------------------------
 # ============= Feature Class Specific Settings =============
 
 # First Order
-  # voxelArrayShift:        # [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and RMS, this is to prevent negative values. If using CT data, or data normalized with mean 0, consider setting this parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that the larger the value, the larger the volume confounding effect will be.
+  voxelArrayShift: 300        # [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and RMS, this is to prevent negative values. If using CT data, or data normalized with mean 0, consider setting this parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that the larger the value, the larger the volume confounding effect will be.
 
 # GLCM
   symmetricalGLCM: True         # [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle, which results in a symmetrical matrix, with equal distributions for i and j. A symmetrical matrix corresponds to the GLCM as defined by Haralick et al.
