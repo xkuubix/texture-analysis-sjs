@@ -52,15 +52,19 @@ def main():
 
     param_file_3d = args.param_file_3d if args.param_file_3d.exists() else None
     param_file_2d = args.param_file_2d if args.param_file_2d.exists() else None
+    param_file_adc = args.param_file_adc if args.param_file_adc.exists() else None
     extractor = RadiomicsExtractor(
         param_file_3d=str(param_file_3d) if param_file_3d else None,
         param_file_2d=str(param_file_2d) if param_file_2d else None,
+        param_file_overrides={
+            "ADC": str(param_file_adc)
+        } if param_file_adc else None,
         default_mode=args.mode or "3D",
     )
     results = extractor.extract(jobs)
 
-    _write_results(results, args.output)
-    print(f"Wrote {len(results)} results to {args.output}")
+    _write_results(results, args.output_dir / f"radiomics_results_label_{args.label}.csv")
+    print(f"Wrote {len(results)} results to {args.output_dir / f'radiomics_results_label_{args.label}.csv'}")
     errors = [result for result in results if result.get("error")]
     print(f"Rows with errors: {len(errors)}")
     for result in errors:

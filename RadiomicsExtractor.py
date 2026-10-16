@@ -62,6 +62,7 @@ class RadiomicsExtractor:
         self,
         param_file_3d: Optional[str] = None,
         param_file_2d: Optional[str] = None,
+        param_file_overrides: Optional[Dict[str, str]] = None,
         transforms: Optional[Callable] = None,
         default_mode: str = "3D",
     ):
@@ -73,6 +74,9 @@ class RadiomicsExtractor:
             self.extractors["3D"] = featureextractor.RadiomicsFeatureExtractor(param_file_3d)
         if param_file_2d is not None:
             self.extractors["2D"] = featureextractor.RadiomicsFeatureExtractor(param_file_2d)
+        self.sequence_extractors: Dict[str, featureextractor.RadiomicsFeatureExtractor] = {}
+        for sequence, param_file in (param_file_overrides or {}).items():
+            self.sequence_extractors[sequence] = featureextractor.RadiomicsFeatureExtractor(param_file)
 
         self.default_mode = default_mode
         self.transforms = transforms
@@ -81,6 +85,11 @@ class RadiomicsExtractor:
             msg = f"\n\n[{mode}] Enabled Image Types: {list(ex.enabledImagetypes.keys())}"
             msg += f"\n[{mode}] Enabled Features: {list(ex.enabledFeatures.keys())}"
             logger.info(msg)
+        for sequence, ex in self.sequence_extractors.items():
+            logger.info(
+                f"\n\n[{sequence}] Enabled Image Types: {list(ex.enabledImagetypes.keys())}"
+                f"\n[{sequence}] Enabled Features: {list(ex.enabledFeatures.keys())}"
+            )
         if self.transforms:
             logger.info(f"Transforms: {self.transforms}")
 
@@ -104,7 +113,7 @@ class RadiomicsExtractor:
         original_force2d_dimension = None
         force2d_dimension_changed = False
         try:
-            extractor = self._extractor_for(mode)
+            extractor = self._extractor_for(mode, d.get("sequence"))
 
             image = self._as_sitk_image(d["img_path"])
             mask = self._as_sitk_image(d["seg_path"])
@@ -145,7 +154,7 @@ class RadiomicsExtractor:
             }
 
         except Exception as e:
-            logger.error(f"Extraction failed for {meta}: {e}")
+            logger.error(f"\nExtraction failed for {meta}: {e}")
             return {
                 **meta,
                 "mode": mode,
@@ -167,7 +176,11 @@ class RadiomicsExtractor:
 
     # ── internals ───────────────────────────────────────────────────────
 
-    def _extractor_for(self, mode: Optional[str]) -> featureextractor.RadiomicsFeatureExtractor:
+    def _extractor_for(
+        self, mode: Optional[str], sequence: Optional[str] = None
+    ) -> featureextractor.RadiomicsFeatureExtractor:
+        if sequence in self.sequence_extractors:
+            return self.sequence_extractors[sequence]
         mode = mode or self.default_mode
         if mode not in self.extractors:
             raise ValueError(f"No parameter file configured for mode={mode!r}. "
