@@ -66,7 +66,7 @@ setting: #----------------------------------------------------------------------
 # ============= Filter Level =============
 
 # Laplacian of Gaussian settings
-  # sigma:                    # List of floats or integers, must be greater than 0. Sigma values to use for the filter (determines coarseness). Setting for sigma must be provided if LoG filter is enabled
+  sigma: [1.0, 2.0, 3.0, 4.0, 5.0] # List of floats or integers, must be greater than 0. Sigma values to use for the filter (determines coarseness). Setting for sigma must be provided if LoG filter is enabled
 
 # Wavelet settings
   # start_level:              # [0]: integer, 0 based level of wavelet which should be used as first set of decompositions from which a signature is calculated
