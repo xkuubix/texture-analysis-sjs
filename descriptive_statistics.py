@@ -316,6 +316,10 @@ data = clinical_data.merge(
     suffixes=("_clinical", "_morph")
 )
 
+data_path = f"/users/project1/pt01190/sjs/Data/derived_merged_clinical_morphological_data.csv"
+
+#save the merged data to a CSV file
+data.to_csv(data_path, index=False)
 # %%
 contingency_matrix = pd.crosstab(data["Sex"], data["diagnosis"])
 
