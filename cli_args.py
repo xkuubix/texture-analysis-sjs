@@ -15,7 +15,11 @@ def _load_config(config_path: Path):
 
 
 def parse_args():
-    default_config = Path(__file__).with_name("config.yml")
+    try:
+        default_config = Path(__file__).with_name("config.yml")
+    except NameError:
+        default_config = Path("config.yml")
+
     config_parser = argparse.ArgumentParser(add_help=False)
     config_parser.add_argument("--config", type=Path, default=default_config)
     config_args, _ = config_parser.parse_known_args()
@@ -33,8 +37,8 @@ def parse_args():
         help="Directory containing patient folders"
     )
     parser.add_argument(
-        "--output", type=Path, default=config.get("output"),
-        help="CSV file for the extracted features"
+        "--output-dir", type=Path, default=config.get("output_dir"),
+        help="Directory for the extracted features"
     )
     parser.add_argument(
         "--mode", choices=("2D", "3D"), default=config.get("mode", None)
@@ -46,6 +50,10 @@ def parse_args():
     parser.add_argument(
         "--param-file-2d", type=Path,
         default=config.get("param_file_2d", "2d_params.yml")
+    )
+    parser.add_argument(
+        "--param-file-adc", type=Path,
+        default=config.get("param_file_adc", "2d_params_adc.yml")
     )
     parser.add_argument(
         "--regions", nargs="+", default=config.get("regions"),
@@ -66,11 +74,13 @@ def parse_args():
         help="For 2D mode, select the slice with the largest ROI"
     )
 
-    args = parser.parse_args()
-    if args.data_root is None or args.output is None:
-        parser.error("data_root and output must be set in config.yml or on the command line")
+    args, unknown = parser.parse_known_args()
+
+    if args.data_root is None or args.output_dir is None:
+        parser.error("data_root and output_dir must be set in config.yml or on the command line")
+        
     config_dir = config_args.config.resolve().parent
-    for name in ("param_file_3d", "param_file_2d"):
+    for name in ("param_file_3d", "param_file_2d", "param_file_adc"):
         path = getattr(args, name)
         if not path.is_absolute():
             setattr(args, name, config_dir / path)
