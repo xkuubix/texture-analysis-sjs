@@ -93,8 +93,6 @@ class RadiomicsExtractor:
         if self.transforms:
             logger.info(f"Transforms: {self.transforms}")
 
-    # ── public API ──────────────────────────────────────────────────────
-
     def get_enabled_image_types(self, mode: Optional[str] = None) -> List[str]:
         return list(self._extractor_for(mode).enabledImagetypes.keys())
 
@@ -119,7 +117,23 @@ class RadiomicsExtractor:
             mask = self._as_sitk_image(d["seg_path"])
             self._validate_geometry(image, mask, meta)
 
-            label = d.get("label", extractor.settings.get("label", 1))
+            requested_label = d.get("label", extractor.settings.get("label", 1))
+
+            if isinstance(requested_label, (list, tuple, set)):
+                labels = list(requested_label)
+                if not labels:
+                    raise ValueError("label list cannot be empty")
+
+                mask_array = sitk.GetArrayFromImage(mask)
+                binary_array = np.isin(mask_array, labels).astype(np.uint8)
+
+                binary_mask = sitk.GetImageFromArray(binary_array)
+                binary_mask.CopyInformation(mask)
+                mask = binary_mask
+
+                label = 1
+            else:
+                label = requested_label
 
             if mode == "2D" and d.get("slice_selection") is not None:
                 image, mask, np_axis, slice_index = self._select_slice(
@@ -147,7 +161,7 @@ class RadiomicsExtractor:
             return {
                 **meta,
                 "mode": mode,
-                "label": label,
+                "label": requested_label,
                 "slice_index": slice_index,
                 "slice_axis": slice_axis,
                 **features,
@@ -223,9 +237,14 @@ class RadiomicsExtractor:
             )
 
     @staticmethod
-    def _select_slice(image: sitk.Image, mask: sitk.Image, label: int,
-                       slice_selection: Union[str, int]):
-        """Return a 3D image/mask pair cropped to one representative slice."""
+    def _select_slice(image: sitk.Image, mask: sitk.Image, label: Union[int, List[int]],
+                      slice_selection: Union[str, int]):
+        """Return a single-slice image/mask pair, retaining 3D geometry."""
+        if image.GetDimension() != 3 or mask.GetDimension() != 3:
+            raise ValueError(
+                f"_select_slice requires 3D images; "
+                f"image={image.GetDimension()}D, mask={mask.GetDimension()}D"
+            )
         spacing = np.asarray(mask.GetSpacing())
         if np.ptp(spacing) < 0.1 * spacing.max():
             sitk_axis = 2
@@ -233,14 +252,17 @@ class RadiomicsExtractor:
             sitk_axis = int(np.argmax(spacing))
         np_axis = 2 - sitk_axis
         mask_arr = sitk.GetArrayFromImage(mask)
-        counts = np.moveaxis(mask_arr == label, np_axis, 0).reshape(
+        if isinstance(label, (list, tuple, set)):
+            foreground = np.isin(mask_arr, list(label))
+        else:
+            foreground = mask_arr == label
+        counts = np.moveaxis(foreground, np_axis, 0).reshape(
             mask_arr.shape[np_axis], -1
         ).sum(axis=1)
 
         if slice_selection == "largest":
             if counts.max() == 0:
-                raise ValueError(f"Label {label} has zero voxels in this mask; "
-                                  f"cannot select a representative slice.")
+                raise ValueError(f"Labels {label} have zero voxels in this mask.")
             idx = int(np.argmax(counts))
         elif isinstance(slice_selection, int):
             idx = slice_selection

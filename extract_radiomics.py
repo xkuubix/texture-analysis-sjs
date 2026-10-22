@@ -29,13 +29,23 @@ def _write_results(results, output_path: Path):
 
 def main():
     args = parse_args()
-
+    print(f"Using configuration file: {args.config}")
+    print(f"Data root: {args.data_root}")
+    print(f"Output directory: {args.output_dir}")
+    print(f"Mode: {args.mode}")
+    print(f"Regions: {args.regions}")
+    print(f"Label: {args.label}")
+    print(f"Slice selection: {args.slice_selection}")
+    print(f"Parameter file 3D: {args.param_file_3d}")
+    print(f"Parameter file 2D: {args.param_file_2d}")
+    print(f"Parameter file ADC: {args.param_file_adc}")
+    
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(message)s")
     dataset = PatientDataset(args.data_root)
 
     if args.correct:
-        for patient in dataset.patients:
-            patient.correct()
+        # for patient in dataset.patients:
+        #     patient.correct()
         for patient in dataset.patients:
             patient.info()
 
@@ -57,14 +67,22 @@ def main():
         param_file_3d=str(param_file_3d) if param_file_3d else None,
         param_file_2d=str(param_file_2d) if param_file_2d else None,
         param_file_overrides={
-            "ADC": str(param_file_adc)
+            "ADC": str(param_file_adc) # for ADC sequences have prio over 2D and 3D param files
         } if param_file_adc else None,
         default_mode=args.mode or "3D",
     )
     results = extractor.extract(jobs)
+    label_str = (
+        "_".join(map(str, args.label))
+        if isinstance(args.label, (list, tuple))
+        else str(args.label)
+    )
 
-    _write_results(results, args.output_dir / f"radiomics_results_label_{args.label}.csv")
-    print(f"Wrote {len(results)} results to {args.output_dir / f'radiomics_results_label_{args.label}.csv'}")
+    _write_results(
+        results,
+        args.output_dir / f"v3_radiomics_results_label_{label_str}.csv"
+    )
+    print(f"Wrote {len(results)} results to {args.output_dir / f'v3_radiomics_results_label_{label_str}.csv'}")
     errors = [result for result in results if result.get("error")]
     print(f"Rows with errors: {len(errors)}")
     for result in errors:
@@ -73,5 +91,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+#
 # %%
