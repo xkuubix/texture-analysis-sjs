@@ -1,5 +1,5 @@
 
-import re
+import re, os
 import warnings
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Union
@@ -7,9 +7,11 @@ import numpy as np
 import csv
 import nibabel as nib
 import nilearn.image as nimg
-
-
+import SimpleITK as sitk
+from pathlib import Path
 import shutil
+
+
 warnings.filterwarnings("ignore", message=".*pixdim.*", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*slope.*", category=UserWarning)
 
@@ -18,18 +20,40 @@ warnings.filterwarnings("ignore", message=".*slope.*", category=UserWarning)
 # File-discovery helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Maps logical sequence names → regex patterns that match the raw .nii.gz files
-SEQUENCE_PATTERNS: Dict[str, str] = {
-    "T1_VIBE_IN":    r"t1_vibe_dixon.*_in",         # in-phase
-    "T1_VIBE_F":     r"t1_vibe_dixon.*_F(?!$)",     # fat-only
-    "T1_VIBE_W":     r"t1_vibe_dixon.*_W(?!$)",     # water-only
-    "T2_SPACE":      r"t2_space_tra.*iso_1\.0mm",
-    "Sialo_MR":      r"Sialo-MR",
-    "T1_TSE":        r"t1_tse_(?:tra|cor)",
-    "T2_DIXON_IN":   r"t2_tse_dixon.*_in",          # in-phase
-    "T2_DIXON_F":    r"t2_tse_dixon.*_F(?!$)",      # fat-only
-    "T2_DIXON_W":    r"t2_tse_dixon.*_W(?!$)",      # water-only
-    "ADC":           r"ep2d_diff",
+N4_CONFIG = {
+    "T1_VIBE_IN": True,
+    "T1_VIBE_F": True,
+    "T1_VIBE_W": True,
+    "T2_SPACE": True,
+    "T1_TSE": True,
+    "T2_DIXON_IN": True,
+    "T2_DIXON_F": True,
+    "T2_DIXON_W": True,
+    "Sialo_MR": False,
+    "ADC": False,
+}
+
+_NOT_N4 = r"(?!.*_N4_corrected)"
+_IS_N4  = r".*_N4_corrected"
+
+_BASE = {
+    "T1_VIBE_IN":  r".*t1_vibe_dixon.*_in",
+    "T1_VIBE_F":   r".*t1_vibe_dixon.*_F",
+    "T1_VIBE_W":   r".*t1_vibe_dixon.*_W",
+    "T2_SPACE":    r".*t2_space_tra.*iso_1\.0mm",
+    "Sialo_MR":    r".*Sialo-MR",
+    "T1_TSE":      r".*t1_tse_(?:tra|cor)",
+    "T2_DIXON_IN": r".*t2_tse_dixon.*_in",
+    "T2_DIXON_F":  r".*t2_tse_dixon.*_F",
+    "T2_DIXON_W":  r".*t2_tse_dixon.*_W",
+    "ADC":         r".*ep2d_diff",
+}
+_NO_N4 = {"Sialo_MR", "ADC"}
+
+SEQUENCE_PATTERNS = {n: _NOT_N4 + p for n, p in _BASE.items()}
+SEQUENCE_PATTERNS_N4 = {
+    n: (_NOT_N4 + p) if n in _NO_N4 else (p + _IS_N4)
+    for n, p in _BASE.items()
 }
 
 # Maps logical segmentation names → file prefix and extraction mode.
@@ -168,9 +192,10 @@ class Patient:
     patient_id : str          e.g. "MK080"
     sequences : dict          {seq_name: nib.Nifti1Image or None}
     segmentations : dict      {seg_name: {"label": nib.Nifti1Image, "colors": dict}}
+    use_n4 : bool             Whether to use N4-corrected images
     """
 
-    def __init__(self, folder: Union[str, Path]):
+    def __init__(self, folder: Union[str, Path], use_n4: bool = False):
         self.folder = Path(folder)
         if not self.folder.exists():
             raise FileNotFoundError(f"Patient folder not found: {self.folder}")
@@ -181,13 +206,15 @@ class Patient:
 
         self.sequences: Dict[str, Optional[Path]] = {}
         self.segmentations: Dict[str, Dict] = {}
+        self.use_n4 = use_n4
 
         self._discover()
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     def _discover(self):
         """Scan folder and populate sequences + segmentations dicts."""
-        for seq_name, pattern in SEQUENCE_PATTERNS.items():
+        sequence_patterns = SEQUENCE_PATTERNS_N4 if self.use_n4 else SEQUENCE_PATTERNS
+        for seq_name, pattern in sequence_patterns.items():
             self.sequences[seq_name] = _find_file(self.folder, pattern + r".*\.nii\.gz$")
 
         for seg_name, settings in SEG_PREFIXES.items():
@@ -394,6 +421,50 @@ class Patient:
 
         return modified
 
+    def n4_correct(self, overwrite: bool = False)-> List[Path]:
+        corrected_paths = []
+        for sequence_name, image_path in self.sequences.items():
+            if image_path is None:
+                print(f"  {sequence_name:<16} — not found")
+                continue
+            image_path = Path(image_path)
+            
+            if not N4_CONFIG.get(sequence_name, False):
+                print(f"  {sequence_name:<16} — skipping N4 correction")
+                continue
+
+            if str(image_path).endswith(".nii.gz"):
+                output_path = image_path.with_name(
+                    image_path.name[:-7] + "_N4_corrected.nii.gz"
+                )
+            else:
+                output_path = image_path.with_name(
+                    image_path.name + "_N4_corrected" + image_path.suffix
+                )
+
+            if os.path.exists(output_path) and not overwrite:
+                print(f"  {sequence_name:<16} — skipping (already exists). Set overwrite=True to replace.")
+                continue
+
+            image = sitk.ReadImage(str(image_path), sitk.sitkFloat32)
+
+            mask = sitk.LiThreshold(image, 0, 1)
+            mask = sitk.BinaryMorphologicalClosing(mask, [5, 5, 5])
+            mask = sitk.BinaryFillhole(mask)
+            mask = sitk.RelabelComponent(sitk.ConnectedComponent(mask)) == 1
+
+            corrector = sitk.N4BiasFieldCorrectionImageFilter()
+            corrector.SetMaximumNumberOfIterations([50, 50, 30, 20])
+            corrector.Execute(image, mask)
+
+            log_bias = corrector.GetLogBiasFieldAsImage(image)
+            corrected = image / sitk.Exp(log_bias)
+
+            sitk.WriteImage(corrected, str(output_path))
+            corrected_paths.append(output_path)
+
+        return corrected_paths
+
     def available_sequences(self) -> List[str]:
         """Return sequences for which an image was found."""
         return [
@@ -476,11 +547,12 @@ class Patient:
 
 class PatientDataset:
 
-    def __init__(self, root: Union[str, Path]):
+    def __init__(self, root: Union[str, Path], use_n4: bool = False):
         self.root = Path(root)
+        self.use_n4 = use_n4
 
         self.patients = [
-            Patient(folder)
+            Patient(folder, use_n4=use_n4)
             for folder in sorted(self.root.iterdir())
             if folder.is_dir()
         ]
