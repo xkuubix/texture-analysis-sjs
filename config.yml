@@ -1,8 +1,0 @@
-data_root: /users/project1/pt01190/sjs/Segmentacje
-output: /users/project1/pt01190/sjs/Results/radiomics_results.csv
-mode: null # default from seg prefixes
-param_file_3d: 3d_params.yml
-param_file_2d: 2d_params.yml
-regions: null
-label: 1
-slice_selection: largest

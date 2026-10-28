@@ -39,9 +39,10 @@ def main():
     print(f"Parameter file 3D: {args.param_file_3d}")
     print(f"Parameter file 2D: {args.param_file_2d}")
     print(f"Parameter file ADC: {args.param_file_adc}")
+    print(f"Use N4: {args.use_n4}\n")
     
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s %(message)s")
-    dataset = PatientDataset(args.data_root)
+    dataset = PatientDataset(args.data_root, args.use_n4)
 
     if args.correct:
         # for patient in dataset.patients:

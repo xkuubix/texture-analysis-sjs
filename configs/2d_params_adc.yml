@@ -94,7 +94,7 @@ setting: #----------------------------------------------------------------------
 
 # Image discretization https://discourse.slicer.org/t/binwidth-optimization/15996/2
   # binWidth:               # [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
-  # binCount:               # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
+  binCount: 64               # [None]: integer, > 0, specifies the number of bins to create. The width of the bin is then determined by the range in the ROI. No definitive evidence is available on which method of discretization is superior, we advise a fixed bin width.
 
 # Forced 2D extraction
   force2D: True                # [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies the ‘slice’ can be defined in force2Ddimension. If input ROI is already a 2D ROI, features are automatically extracted in 2D.

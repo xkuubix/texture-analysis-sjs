@@ -15,10 +15,7 @@ def _load_config(config_path: Path):
 
 
 def parse_args():
-    try:
-        default_config = Path(__file__).with_name("config.yml")
-    except NameError:
-        default_config = Path("config.yml")
+    default_config = Path("configs/config.yml")
 
     config_parser = argparse.ArgumentParser(add_help=False)
     config_parser.add_argument("--config", type=Path, default=default_config)
@@ -30,7 +27,7 @@ def parse_args():
     )
     parser.add_argument(
         "--config", type=Path, default=config_args.config,
-        help="YAML configuration file (default: config.yml)"
+        help="YAML configuration file (default: configs/config.yml)"
     )
     parser.add_argument(
         "--data-root", type=Path, default=config.get("data_root"),
@@ -72,6 +69,11 @@ def parse_args():
         "--slice-selection", choices=("largest",),
         default=config.get("slice_selection"),
         help="For 2D mode, select the slice with the largest ROI"
+    )
+    parser.add_argument(
+        "--use-n4", action="store_true",
+        default=config.get("use_n4", False),
+        help="Use N4-corrected images if available"
     )
 
     args, unknown = parser.parse_known_args()

@@ -1,0 +1,10 @@
+data_root: /users/project1/pt01190/sjs/Segmentacje_v2/
+output_dir: /users/project1/pt01190/sjs/Radiomics/
+mode: null # default from seg prefixes
+param_file_3d: 3d_params.yml
+param_file_2d: 2d_params.yml
+param_file_adc: 2d_params_adc.yml
+regions: null
+label: [1, 2]
+slice_selection: largest
+use_n4: False
