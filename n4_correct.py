@@ -20,7 +20,6 @@ def main():
             assert "N4" not in str(v), f"N4 have been already applied to {k}"
     for patient in range(len(dataset.patients)):
         dataset[patient].n4_correct(overwrite=False)
-        break
 
 if __name__ == "__main__":
     main()
