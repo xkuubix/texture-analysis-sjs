@@ -1,13 +1,17 @@
 # %%
 import pandas as pd
+import os
+
 
 SAVE_FIGURES = True
 SAVE_FORMAT = "eps"
 
-results_path = "/users/project1/pt01190/sjs/Results"
+results_path = "/users/project1/pt01190/sjs/Results/v2"
+os.makedirs(results_path, exist_ok=True)
 
 clinical_data_path = "/users/project1/pt01190/sjs/Data/SJS_DaneKliniczne_dla_PG_v1.xlsm"
-morphological_data_path = "/users/project1/pt01190/sjs/Data/Baza dla PG v1.xlsx"
+# morphological_data_path = "/users/project1/pt01190/sjs/Data/Baza dla PG v1.xlsx"
+morphological_data_path = "/users/project1/pt01190/sjs/Data/Baza dla PG v2ed.xlsx"
 
 clinical_data = pd.read_excel(clinical_data_path, header=[2], engine="openpyxl")
 for col in clinical_data.columns:
@@ -242,7 +246,7 @@ plt.show()
 
 # %%
 morphological_data = pd.read_excel(morphological_data_path, header=[0, 1, 2], engine="openpyxl")
-morphological_data = morphological_data.iloc[:, :24]
+morphological_data = morphological_data.iloc[:, :30]
 new_columns = []
 for level_0, level_1, level_2 in morphological_data.columns:
     if "Unnamed:" in str(level_0) and "Unnamed:" in str(level_1):
@@ -287,23 +291,28 @@ keep_morphological_cols = [
     'Age',
     'Weight',
     'Height',
-    # 'MR_głowa yes-1  no-0',
-    # 'Quality/Problems',
-    'Right Parotid Gland - Morpholohy - T1W heterogeneous fat deposition \n(0-homo, \n1-hetero)',
+    'MR_głowa yes-1  no-0',
+    'Quality/Problems',
     'Right Parotid Gland - Morpholohy - Multiple hyperintense spots in PGs on fsT2WI \n(0-no spots \n1-presence of spots)',
+    # 'Right Parotid Gland - Morpholohy - Rozbieżność T2WI (0-nie; 1-tak)',
     'Right Parotid Gland - Morpholohy - Multiple hyperintense spots in PGs on MR sialography \n(0-no spots \n1-presence of spots)',
+    # 'Right Parotid Gland - Morpholohy - Rozbieżność sjalo (0-nie; 1-tak)',
     'Right Parotid Gland - TONAMI - Grade 0 (normal)—no evidence \nGrade 1 (punctate)—areas ≤ 1 mm in diameter;  \nGrade 2 (globular)—1–2 mm in diameter; \nGrade 3 (cavitary)—up to 1 cm in diameter; \nGrade 4 (destructive)— complete destruction of the gland parenchyma.',
+    # 'Right Parotid Gland - TONAMI - Rozbieżność Tonami (0-nie; 1-tak)',
     'Right Parotid Gland - fsT2WI - high-intensity spots - grade I (0–9\ngrade II (10–19\ngrade III (20–29\ngrade IV (>29',
     'Right Parotid Gland - Sjalo - high-intensity spots - grade I (0–19\ngrade II (20–39\ngrade III (40–59\ngrade IV (>59)',
     'Right Parotid Gland - Cho - Grade 1: normal or sparse distribution of streak-like fat signals \nGrade 2: diffusive distributed, honeycomb-like fat signals; \nGrade 3: less than 50% of the total area of whole salivary glands; \nGrade 4: massively homogeneously distributed fat\nsignal',
-    'Left Parotid Gland - Morpholohy + ADC - T1W heterogeneous fat deposition \n(0-homo, \n1-hetero)',
-    'Left Parotid Gland - Morpholohy + ADC - Multiple hyperintense spots in PGs on fsT2WI \n(0-no spots \n1-presence of spots)',
-    'Left Parotid Gland - Morpholohy + ADC - Multiple hyperintense spots in PGs on MR sialography \n(0-no spots \n1-presence of spots)',
+    # 'Right Parotid Gland - Cho - Rozbieżność Cho (0-nie; 1-tak)',
+    'Left Parotid Gland - Morphology - Multiple hyperintense spots in PGs on fsT2WI \n(0-no spots \n1-presence of spots)',
+    # 'Left Parotid Gland - Morphology - Rozbieżność T2WI (0-nie; 1-tak)',
+    'Left Parotid Gland - Morphology - Multiple hyperintense spots in PGs on MR sialography \n(0-no spots \n1-presence of spots)',
+    # 'Left Parotid Gland - Morphology - Rozbieżność sjalo (0-nie; 1-tak)',
     'Left Parotid Gland - TONAMI - Grade 0 (normal)—no evidence \nGrade 1 (punctate)—areas ≤ 1 mm in diameter;  \nGrade 2 (globular)—1–2 mm in diameter; \nGrade 3 (cavitary)—up to 1 cm in diameter; \nGrade 4 (destructive)— complete destruction of the gland parenchyma.',
     'Left Parotid Gland - fsT2WI - high-intensity spots - grade I (0–9\ngrade II (10–19\ngrade III (20–29\ngrade IV (>29',
     'Left Parotid Gland - Sjalo - high-intensity spots - grade I (0–19\ngrade II (20–39\ngrade III (40–59\ngrade IV (>59)',
-    'Left Parotid Gland - Cho - Grade 1: normal or sparse distribution of streak-like fat signals \nGrade 2: diffusive distributed, honeycomb-like fat signals; \nGrade 3: less than 50% of the total area of whole salivary glands; \nGrade 4: massively homogeneously distributed fat\nsignal'
-       ]
+    'Left Parotid Gland - Cho - Grade 1: normal or sparse distribution of streak-like fat signals \nGrade 2: diffusive distributed, honeycomb-like fat signals; \nGrade 3: less than 50% of the total area of whole salivary glands; \nGrade 4: massively homogeneously distributed fat\nsignal',
+    # 'Left Parotid Gland - Cho - Rozbieżność Cho (0-nie; 1-tak)'
+]
 
 # for i in range(len(keep_morphological_cols)):
 #     col = morphological_data[keep_morphological_cols[i]]
@@ -316,7 +325,7 @@ data = clinical_data.merge(
     suffixes=("_clinical", "_morph")
 )
 
-data_path = f"/users/project1/pt01190/sjs/Data/derived_merged_clinical_morphological_data.csv"
+data_path = f"/users/project1/pt01190/sjs/Data/derived_merged_clinical_morphological_data_v2.csv"
 
 #save the merged data to a CSV file
 data.to_csv(data_path, index=False)
@@ -378,7 +387,6 @@ import matplotlib.pyplot as plt
 
 mri_cols_map = {
     # Right
-    next(c for c in data.columns if "Right" in c and "T1W" in c): "Right_T1W_fat",
     next(c for c in data.columns if "Right" in c and "fsT2WI \n(" in c): "Right_fsT2WI_spots",
     next(c for c in data.columns if "Right" in c and "MR sialography \n(" in c): "Right_Sjalo_spots",
     next(c for c in data.columns if "Right" in c and "TONAMI" in c): "Right_TONAMI",
@@ -387,7 +395,6 @@ mri_cols_map = {
     next(c for c in data.columns if "Right" in c and "Cho" in c): "Right_Cho_grade",
 
     # Left
-    next(c for c in data.columns if "Left" in c and "T1W" in c): "Left_T1W_fat",
     next(c for c in data.columns if "Left" in c and "fsT2WI \n(" in c): "Left_fsT2WI_spots",
     next(c for c in data.columns if "Left" in c and "MR sialography \n(" in c): "Left_Sjalo_spots",
     next(c for c in data.columns if "Left" in c and "TONAMI" in c): "Left_TONAMI",
@@ -399,8 +406,8 @@ mri_cols_map = {
 data = data.rename(columns=mri_cols_map)
 
 binary_cols = [
-    "Right_T1W_fat", "Right_fsT2WI_spots", "Right_Sjalo_spots",
-    "Left_T1W_fat", "Left_fsT2WI_spots", "Left_Sjalo_spots"
+    "Right_fsT2WI_spots", "Right_Sjalo_spots",
+    "Left_fsT2WI_spots", "Left_Sjalo_spots"
 ]
 
 ordinal_cols = [
@@ -418,7 +425,6 @@ print(
 print("-" * 65)
 
 lr_pairs = [
-    ("Right_T1W_fat", "Left_T1W_fat", None),
     ("Right_fsT2WI_spots", "Left_fsT2WI_spots", None),
     ("Right_Sjalo_spots", "Left_Sjalo_spots", None),
     ("Right_TONAMI", "Left_TONAMI", "quadratic"),
@@ -453,7 +459,7 @@ for r_col, l_col, weight_type in lr_pairs:
         )
 # %%
 # binary findings: patient is positive if EITHER gland is positive
-for base in ["T1W_fat", "fsT2WI_spots", "Sjalo_spots"]:
+for base in ["fsT2WI_spots", "Sjalo_spots"]:
     data[f"{base}_either"] = data[[f"Right_{base}", f"Left_{base}"]].max(axis=1, skipna=True)
 
 # ordinal grades: take the WORSE (higher) of the two sides
@@ -474,7 +480,7 @@ import pandas as pd
 
 diagnoses = sorted(data["diagnosis"].dropna().unique())
 
-binary_composite = [f"{b}_either" for b in ["T1W_fat", "fsT2WI_spots", "Sjalo_spots"]]
+binary_composite = [f"{b}_either" for b in ["fsT2WI_spots", "Sjalo_spots"]]
 ordinal_composite = [f"{b}_worse" for b in ["TONAMI", "fsT2WI_grade", "Sjalo_grade", "Cho_grade"]]
 
 def cramers_v(table):
@@ -583,7 +589,7 @@ from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 import pandas as pd
 
-binary_composite = [f"{b}_either" for b in ["T1W_fat", "fsT2WI_spots", "Sjalo_spots"]]
+binary_composite = [f"{b}_either" for b in ["fsT2WI_spots", "Sjalo_spots"]]
 diagnoses = sorted(data["diagnosis"].dropna().unique())
 
 # raw counts first - confirms which group is driving the low-expected-count
